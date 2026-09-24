@@ -12,14 +12,38 @@
 .visible { display: block !important; }
 
 :root {
-  --bg:        #0c0b14;
-  --card:      #161428;
-  --border:    rgba(255,255,255,0.08);
-  --border-hi: rgba(255,255,255,0.14);
-  --accent:    #e8622a;
-  --text:      rgba(255,255,255,0.9);
-  --muted:     rgba(255,255,255,0.38);
-  --subtle:    rgba(255,255,255,0.16);
+  --bg:           #0c0b14;
+  --card:         #161428;
+  --border:       rgba(255,255,255,0.08);
+  --border-hi:    rgba(255,255,255,0.14);
+  --accent:       #e8622a;
+  --text:         rgba(255,255,255,0.9);
+  --muted:        rgba(255,255,255,0.38);
+  --subtle:       rgba(255,255,255,0.16);
+  --input-bg:     rgba(0,0,0,0.3);
+  --ui-bg:        rgba(255,255,255,0.04);
+  --ui-bg-hover:  rgba(255,255,255,0.08);
+  --dd-bg:        #1a1730;
+  --logo-color:   #fff;
+  --ambient-a:    rgba(99,60,180,0.1);
+  --ambient-b:    rgba(232,98,42,0.05);
+}
+
+body.light {
+  --bg:           #f0eff7;
+  --card:         #ffffff;
+  --border:       rgba(0,0,0,0.08);
+  --border-hi:    rgba(0,0,0,0.13);
+  --text:         rgba(0,0,0,0.85);
+  --muted:        rgba(0,0,0,0.45);
+  --subtle:       rgba(0,0,0,0.28);
+  --input-bg:     rgba(0,0,0,0.04);
+  --ui-bg:        rgba(0,0,0,0.04);
+  --ui-bg-hover:  rgba(0,0,0,0.07);
+  --dd-bg:        #ffffff;
+  --logo-color:   #1a1428;
+  --ambient-a:    rgba(99,60,180,0.06);
+  --ambient-b:    rgba(232,98,42,0.04);
 }
 
 body {
@@ -41,8 +65,8 @@ body::before {
   content: '';
   position: fixed; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 600px 400px at 30% 20%, rgba(99,60,180,0.1) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 300px at 70% 60%, rgba(232,98,42,0.05) 0%, transparent 70%);
+    radial-gradient(ellipse 600px 400px at 30% 20%, var(--ambient-a) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 70% 60%, var(--ambient-b) 0%, transparent 70%);
 }
 
 .wrap { width: 100%; max-width: 480px; position: relative; }
@@ -55,7 +79,7 @@ nav {
 .logo {
   display: flex; align-items: center; gap: 9px;
   font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
-  text-transform: uppercase; color: #fff;
+  text-transform: uppercase; color: var(--logo-color);
 }
 .logo-icon {
   width: 28px; height: 28px; border-radius: 7px;
@@ -67,7 +91,7 @@ nav {
 .status-pill {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 11px; border-radius: 99px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: var(--ui-bg); border: 1px solid var(--border);
   font-size: 11px; color: var(--muted);
 }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
@@ -79,17 +103,17 @@ nav {
 .settings-rel { position: relative; }
 .cog-btn {
   width: 32px; height: 32px; border-radius: 8px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: var(--ui-bg); border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: background 0.15s; flex-shrink: 0;
 }
-.cog-btn:hover { background: rgba(255,255,255,0.08); }
+.cog-btn:hover { background: var(--ui-bg-hover); }
 
 /* Settings dropdown */
 .dd {
   position: absolute; right: 0; top: calc(100% + 8px);
   width: 252px; z-index: 200;
-  background: #1a1730; border: 1px solid var(--border-hi);
+  background: var(--dd-bg); border: 1px solid var(--border-hi);
   border-radius: 12px; overflow: hidden;
   box-shadow: 0 16px 48px rgba(0,0,0,0.7);
 }
@@ -112,18 +136,18 @@ nav {
 .radio .rdot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .dd-folder { display: flex; gap: 6px; margin-top: 4px; }
 .dd-folder input {
-  flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  flex: 1; background: var(--input-bg); border: 1px solid var(--border);
   border-radius: 7px; font-size: 11px; padding: 6px 8px;
   color: rgba(255,255,255,0.65) !important; outline: none;
   font-family: 'Raleway', sans-serif;
 }
 .dd-folder button {
   padding: 6px 10px; border-radius: 7px;
-  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  background: var(--ui-bg); border: 1px solid var(--border);
   color: var(--muted); font-size: 10px; cursor: pointer; white-space: nowrap;
   transition: background 0.1s;
 }
-.dd-folder button:hover { background: rgba(255,255,255,0.09); }
+.dd-folder button:hover { background: var(--ui-bg-hover); }
 
 /* ── Card ── */
 .card {
@@ -157,7 +181,7 @@ nav {
 /* ── Inputs ── */
 input[type="text"], input[type="url"] {
   color: var(--text) !important;
-  background: rgba(0,0,0,0.3);
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 13px; padding: 10px 13px;
@@ -176,24 +200,24 @@ input:focus {
 .url-row input { flex: 1; }
 .load-btn {
   flex-shrink: 0; padding: 10px 16px;
-  background: rgba(255,255,255,0.05); border: 1px solid var(--border-hi);
+  background: var(--ui-bg); border: 1px solid var(--border-hi);
   border-radius: 10px; color: rgba(255,255,255,0.65);
   font-size: 12px; font-weight: 600; cursor: pointer;
   transition: all 0.15s; white-space: nowrap; letter-spacing: 0.03em;
 }
-.load-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); color: #fff; }
+.load-btn:hover:not(:disabled) { background: var(--ui-bg-hover); color: var(--text); }
 .load-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Thumbnail / meta box ── */
 .thumb-card {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px; border-radius: 10px;
-  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+  background: var(--ui-bg); border: 1px solid var(--border);
   margin-top: 12px;
 }
 .thumb-img-wrap {
   width: 80px; height: 45px; border-radius: 7px;
-  background: rgba(255,255,255,0.06); flex-shrink: 0; overflow: hidden;
+  background: var(--ui-bg-hover); flex-shrink: 0; overflow: hidden;
 }
 .thumb-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .meta-title { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.82); line-height: 1.35; }
@@ -204,7 +228,7 @@ input:focus {
 .range-right { display: flex; align-items: center; gap: 8px; }
 .dur-badge {
   font-size: 11px; font-family: 'JetBrains Mono', monospace;
-  color: var(--muted); background: rgba(255,255,255,0.04);
+  color: var(--muted); background: var(--ui-bg);
   border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
 }
 .chips { display: flex; gap: 6px; }
@@ -239,12 +263,12 @@ input.mono {
 
 .whole-btn {
   flex-shrink: 0; width: 38px; height: 42px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: var(--ui-bg); border: 1px solid var(--border);
   border-radius: 10px; cursor: pointer; color: var(--muted); font-size: 14px;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
 }
-.whole-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.whole-btn:hover { background: var(--ui-bg-hover); color: var(--text); }
 .whole-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
 /* ── Output folder ── */
@@ -252,12 +276,12 @@ input.mono {
 .folder-row input { flex: 1; font-size: 12px !important; color: var(--muted) !important; }
 .browse-btn {
   flex-shrink: 0; padding: 10px 14px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: var(--ui-bg); border: 1px solid var(--border);
   border-radius: 10px; color: var(--muted);
   font-size: 12px; font-weight: 500; cursor: pointer;
   transition: all 0.15s; white-space: nowrap;
 }
-.browse-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.browse-btn:hover { background: var(--ui-bg-hover); color: var(--text); }
 
 /* ── Extract button ── */
 .extract-btn {
@@ -280,7 +304,7 @@ input.mono {
 .progress-wrap { display: none; margin-top: 14px; }
 .progress-wrap.visible { display: block; }
 .prog-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
-.prog-track { height: 3px; border-radius: 99px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.prog-track { height: 3px; border-radius: 99px; background: var(--ui-bg-hover); overflow: hidden; }
 .prog-fill {
   height: 100%; border-radius: 99px;
   background: linear-gradient(90deg, #e8622a, #f09040);
@@ -510,7 +534,8 @@ function setTheme(el, val) {
   el.querySelector('.radio').classList.add('on');
   const dot = document.createElement('div'); dot.className = 'rdot';
   el.querySelector('.radio').appendChild(dot);
-  // light mode: could be added later
+  document.body.classList.toggle('light', val === 'light');
+  localStorage.setItem('cue_theme', val);
 }
 
 function saveDefaultFolder() {
@@ -547,6 +572,30 @@ function selectWholeClip() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+
+// Restore theme before first paint
+(function() {
+  const t = localStorage.getItem('cue_theme');
+  if (t === 'light') {
+    document.body.classList.add('light');
+    // mark the light option as selected in dropdown
+    document.addEventListener('DOMContentLoaded', () => {
+      const opts = document.querySelectorAll('.dd-sec:last-child .dd-opt');
+      opts.forEach(o => {
+        o.classList.remove('on');
+        o.querySelector('.radio').classList.remove('on');
+        const d = o.querySelector('.rdot'); if (d) d.remove();
+      });
+      const lightOpt = opts[1];
+      if (lightOpt) {
+        lightOpt.classList.add('on');
+        lightOpt.querySelector('.radio').classList.add('on');
+        const dot = document.createElement('div'); dot.className = 'rdot';
+        lightOpt.querySelector('.radio').appendChild(dot);
+      }
+    });
+  }
+})();
 
 (async () => {
   // restore default folder from localStorage
