@@ -55,3 +55,16 @@ Double-click `launch.vbs` — the server starts silently in the background and t
 **Auto-detection**
 - Finds `yt-dlp` in pip Scripts, PATH, Windows Store Python, and common install paths
 - Finds `ffmpeg` in PATH and WinGet packages directory — passes explicit path to `yt-dlp` so it works regardless of environment
+
+---
+
+## Planned
+
+**Adobe Premiere Pro CEP panel**
+
+Turn CueClipper into a docked panel inside Premiere Pro — same UI, same smart paste, but with two extra buttons after the clip downloads:
+
+- **Place above** — drops the clip onto a new track above existing ones at the playhead position, nothing on the timeline moves
+- **Insert** — places the clip at the playhead and ripple-shifts everything to the right
+
+The goal: paste a client reference message, hit download, click a button — clip lands on the timeline without touching the file browser.
