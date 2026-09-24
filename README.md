@@ -1,4 +1,4 @@
-# YT Scene Extractor
+# ClueClipper
 
 A minimal local web app for extracting clips from YouTube (and other platforms) by time range — no GUI framework, no Electron, just a Python HTTP server and a browser UI.
 
@@ -62,7 +62,7 @@ Double-click `launch.vbs` — the server starts silently in the background and t
 
 **Adobe Premiere Pro CEP panel**
 
-Turn CueClipper into a docked panel inside Premiere Pro — same UI, same smart paste, but with two extra buttons after the clip downloads:
+Turn ClueClipper into a docked panel inside Premiere Pro — same UI, same smart paste, but with two extra buttons after the clip downloads:
 
 - **Place above** — drops the clip onto a new track above existing ones at the playhead position, nothing on the timeline moves
 - **Insert** — places the clip at the playhead and ripple-shifts everything to the right
