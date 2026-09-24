@@ -368,9 +368,8 @@ input.mono {
       </div>
       <div class="settings-rel">
         <button class="cog-btn" onclick="toggleDD()" title="Settings">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.3">
-            <circle cx="7.5" cy="7.5" r="2.3"/>
-            <path d="M7.5 1.5v1.5M7.5 12v1.5M1.5 7.5H3M12 7.5h1.5M3.4 3.4l1.06 1.06M10.54 10.54l1.06 1.06M11.6 3.4l-1.06 1.06M4.46 10.54l-1.06 1.06" stroke-linecap="round"/>
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="rgba(255,255,255,0.4)">
+            <path d="M10 12.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm7.07-2.07-.9-.52a6.1 6.1 0 0 0 0-1.82l.9-.52a1 1 0 0 0 .37-1.37l-1-1.73a1 1 0 0 0-1.37-.37l-.9.52a6.1 6.1 0 0 0-1.57-.91V3.5a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v1.01a6.1 6.1 0 0 0-1.57.91l-.9-.52a1 1 0 0 0-1.37.37l-1 1.73a1 1 0 0 0 .37 1.37l.9.52a6.1 6.1 0 0 0 0 1.82l-.9.52a1 1 0 0 0-.37 1.37l1 1.73a1 1 0 0 0 1.37.37l.9-.52c.49.35 1.02.64 1.57.91v1.01a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-1.01a6.1 6.1 0 0 0 1.57-.91l.9.52a1 1 0 0 0 1.37-.37l1-1.73a1 1 0 0 0-.37-1.37z"/>
           </svg>
         </button>
         <div class="dd hidden" id="dd">
@@ -389,11 +388,6 @@ input.mono {
               <input type="text" id="ddFolder" placeholder="e.g. C:\Downloads\YT Extracts" oninput="saveDefaultFolder()" />
               <button onclick="browseDefaultFolder()">Browse</button>
             </div>
-          </div>
-          <div class="dd-sec">
-            <div class="dd-lbl">Appearance</div>
-            <div class="dd-opt on" onclick="setTheme(this,'dark')"><div class="radio on"><div class="rdot"></div></div><span>Dark</span></div>
-            <div class="dd-opt" onclick="setTheme(this,'light')"><div class="radio"></div><span>Light</span></div>
           </div>
         </div>
       </div>
@@ -571,31 +565,31 @@ function selectWholeClip() {
   updateDurBadge();
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Status polling ─────────────────────────────────────────────────────────────
 
-// Restore theme before first paint
-(function() {
-  const t = localStorage.getItem('cue_theme');
-  if (t === 'light') {
-    document.body.classList.add('light');
-    // mark the light option as selected in dropdown
-    document.addEventListener('DOMContentLoaded', () => {
-      const opts = document.querySelectorAll('.dd-sec:last-child .dd-opt');
-      opts.forEach(o => {
-        o.classList.remove('on');
-        o.querySelector('.radio').classList.remove('on');
-        const d = o.querySelector('.rdot'); if (d) d.remove();
-      });
-      const lightOpt = opts[1];
-      if (lightOpt) {
-        lightOpt.classList.add('on');
-        lightOpt.querySelector('.radio').classList.add('on');
-        const dot = document.createElement('div'); dot.className = 'rdot';
-        lightOpt.querySelector('.radio').appendChild(dot);
-      }
-    });
+async function checkServerStatus() {
+  const dot   = document.getElementById('statusDot');
+  const label = document.getElementById('statusLabel');
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2000);
+    const r = await fetch(`${API}/api/ping`, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (r.ok) {
+      dot.style.background = '#4ade80';
+      dot.className = 'status-dot pulse';
+      if (label.textContent === 'Offline') label.textContent = 'Ready';
+    }
+  } catch (_) {
+    dot.style.background = '#f87171';
+    dot.className = 'status-dot';
+    label.textContent = 'Offline';
   }
-})();
+}
+checkServerStatus();
+setInterval(checkServerStatus, 5000);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
 
 (async () => {
   // restore default folder from localStorage

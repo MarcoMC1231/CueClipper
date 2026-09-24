@@ -1,15 +1,52 @@
 #!/usr/bin/env python3
+import atexit
 import json
 import os
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 DEFAULT_OUTPUT = str(Path.home() / "Downloads" / "YT Extracts")
 JOBS = {}  # job_id -> { status, progress, error, output_path }
+
+# ─── PID file ────────────────────────────────────────────────────────────────
+
+_PID_FILE = Path(__file__).parent / "server.pid"
+
+def _write_pid():
+    _PID_FILE.write_text(str(os.getpid()))
+
+def _remove_pid():
+    try:
+        _PID_FILE.unlink()
+    except Exception:
+        pass
+
+_write_pid()
+atexit.register(_remove_pid)
+
+# ─── Inactivity watchdog ─────────────────────────────────────────────────────
+
+INACTIVITY_MINUTES = 30
+_last_activity = time.time()
+
+def _touch():
+    global _last_activity
+    _last_activity = time.time()
+
+def _watchdog():
+    while True:
+        time.sleep(60)
+        if time.time() - _last_activity > INACTIVITY_MINUTES * 60:
+            print(f"No activity for {INACTIVITY_MINUTES} min — shutting down.")
+            _remove_pid()
+            os._exit(0)
+
+threading.Thread(target=_watchdog, daemon=True).start()
 
 def open_folder_dialog(initial_dir=None):
     try:
@@ -213,7 +250,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == "/" or self.path == "/index.html":
+        _touch()
+        if self.path == "/api/ping":
+            self.send_json({"ok": True})
+        elif self.path == "/" or self.path == "/index.html":
             self._serve_static("index.html", "text/html; charset=utf-8")
         elif self.path == "/api/status":
             self.send_json({"ytdlp": YTDLP, "ok": bool(YTDLP), "ffmpeg": FFMPEG, "default_output": DEFAULT_OUTPUT})
@@ -231,6 +271,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error": "Not found"}, 404)
 
     def do_POST(self):
+        _touch()
         data = self.read_body()
         if self.path == "/api/metadata":
             self._handle_metadata(data)
