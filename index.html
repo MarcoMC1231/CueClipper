@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YT Scene Extractor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #111;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+
+  .card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 520px;
+    padding: 28px 28px 24px;
+  }
+
+  h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h1 .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff4444;
+    flex-shrink: 0;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], input[type="url"] {
+    width: 100%;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 7px;
+    color: #e0e0e0;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: #ff4444; }
+
+  .section { margin-bottom: 20px; }
+
+  .row { display: flex; gap: 12px; }
+  .row .section { flex: 1; }
+
+  .url-row { display: flex; gap: 10px; align-items: flex-end; }
+  .url-row input { flex: 1; }
+
+  button {
+    background: #ff4444;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  button:hover:not(:disabled) { background: #e03030; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: #2a2a2a;
+    color: #ccc;
+  }
+  .btn-secondary:hover:not(:disabled) { background: #333; }
+
+  .btn-extract {
+    width: 100%;
+    padding: 12px;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .meta-box {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 7px;
+    padding: 12px 14px;
+    min-height: 52px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .meta-box.visible { display: block; }
+  .meta-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #e0e0e0;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  .meta-sub {
+    font-size: 11px;
+    color: #666;
+  }
+
+  .time-input-wrapper {
+    position: relative;
+  }
+  .time-input-wrapper input {
+    font-family: "Courier New", monospace;
+    letter-spacing: 0.06em;
+    padding-right: 36px;
+  }
+  .time-input-wrapper .paste-ts {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .time-input-wrapper .paste-ts:hover { color: #ff4444; background: none; }
+
+  .output-row { display: flex; gap: 10px; align-items: flex-end; }
+  .output-row input { flex: 1; font-size: 11px; color: #888; }
+
+  /* Progress */
+  .progress-wrap {
+    margin-top: 16px;
+    display: none;
+  }
+  .progress-wrap.visible { display: block; }
+
+  .progress-bar-bg {
+    background: #222;
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: #ff4444;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .status-msg {
+    font-size: 11px;
+    color: #666;
+    font-family: "Courier New", monospace;
+    min-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .done-box {
+    background: #1a2a1a;
+    border: 1px solid #2a4a2a;
+    border-radius: 7px;
+    padding: 12px 14px;
+    margin-top: 12px;
+    display: none;
+  }
+  .done-box.visible { display: block; }
+  .done-box .done-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .done-box .done-path {
+    font-size: 11px;
+    color: #888;
+    font-family: "Courier New", monospace;
+    word-break: break-all;
+  }
+
+  .error-box {
+    background: #2a1a1a;
+    border: 1px solid #4a2a2a;
+    border-radius: 7px;
+    padding: 12px 14px;
+    margin-top: 12px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+  .error-box pre {
+    font-size: 11px;
+    color: #c55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "Courier New", monospace;
+  }
+
+  .ytdlp-warn {
+    background: #2a2a1a;
+    border: 1px solid #4a4a2a;
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #aa8;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .ytdlp-warn.visible { display: block; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #222;
+    margin: 20px 0;
+  }
+
+  .toggle-group {
+    display: flex;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 7px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .toggle-btn {
+    flex: 1;
+    background: transparent;
+    color: #555;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .toggle-btn.active { background: #ff4444; color: #fff; }
+  .toggle-btn:hover:not(:disabled):not(.active) { background: #222; color: #aaa; }
+  .toggle-btn.active:hover:not(:disabled) { background: #e03030; }
+
+  .btn-icon {
+    background: #2a2a2a;
+    color: #666;
+    padding: 9px 11px;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-bottom: 20px;
+  }
+  .btn-icon:hover:not(:disabled) { background: #333; color: #ccc; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1><span class="dot"></span>YT Scene Extractor</h1>
+
+  <div class="ytdlp-warn" id="ytdlpWarn">
+    yt-dlp not found. Install with: <code>pip install yt-dlp</code>
+  </div>
+
+  <!-- URL -->
+  <div class="section">
+    <label>YouTube URL</label>
+    <div class="url-row">
+      <input type="url" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." />
+      <button id="loadBtn" onclick="loadMeta()">Load</button>
+    </div>
+  </div>
+
+  <!-- Meta -->
+  <div class="meta-box" id="metaBox">
+    <div class="meta-title" id="metaTitle"></div>
+    <div class="meta-sub" id="metaSub"></div>
+  </div>
+
+  <!-- Timestamps -->
+  <div class="row" style="align-items: flex-end;">
+    <div class="section">
+      <label>Start</label>
+      <div class="time-input-wrapper">
+        <input type="text" id="startInput" placeholder="00:00:00" value="00:00:00" />
+      </div>
+    </div>
+    <div class="section">
+      <label>End</label>
+      <div class="time-input-wrapper">
+        <input type="text" id="endInput" placeholder="00:00:00" value="00:00:00" />
+      </div>
+    </div>
+    <button class="btn-icon" onclick="selectWholeClip()" title="Select whole clip">↔</button>
+  </div>
+
+  <!-- Format -->
+  <div class="section">
+    <label>Format</label>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="fmtMp4" onclick="setFormat('mp4')">MP4</button>
+      <button class="toggle-btn" id="fmtMp3" onclick="setFormat('mp3')">MP3</button>
+    </div>
+  </div>
+
+  <!-- Output folder -->
+  <div class="section">
+    <label>Output folder</label>
+    <div class="output-row">
+      <input type="text" id="outputDir" />
+      <button class="btn-secondary" onclick="browseFolder()">Browse</button>
+    </div>
+  </div>
+
+  <button class="btn-extract" id="extractBtn" onclick="extract()" disabled>Extract Clip</button>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="status-msg" id="statusMsg">Starting…</div>
+  </div>
+
+  <div class="done-box" id="doneBox">
+    <div class="done-title">Done</div>
+    <div class="done-path" id="donePath"></div>
+  </div>
+
+  <div class="error-box" id="errorBox">
+    <pre id="errorText"></pre>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:7433';
+let videoDuration = 0;
+let pollTimer = null;
+let selectedFormat = 'mp4';
+
+function setFormat(fmt) {
+  selectedFormat = fmt;
+  document.getElementById('fmtMp4').classList.toggle('active', fmt === 'mp4');
+  document.getElementById('fmtMp3').classList.toggle('active', fmt === 'mp3');
+}
+
+function selectWholeClip() {
+  document.getElementById('startInput').value = '00:00:00';
+  document.getElementById('endInput').value = secondsToTs(videoDuration);
+}
+
+// ── init ─────────────────────────────────────────────────────────────────────
+
+(async () => {
+  try {
+    const r = await fetch(`${API}/api/status`);
+    const d = await r.json();
+    if (!d.ok) document.getElementById('ytdlpWarn').classList.add('visible');
+    if (d.default_output) document.getElementById('outputDir').value = d.default_output;
+  } catch (_) {
+    document.getElementById('outputDir').value = 'Downloads\\YT Extracts';
+  }
+})();
+
+// ── metadata ─────────────────────────────────────────────────────────────────
+
+async function loadMeta() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  hide('metaBox');
+  hide('doneBox');
+  hide('errorBox');
+
+  try {
+    const r = await fetch(`${API}/api/metadata`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const d = await r.json();
+
+    if (d.error) {
+      showError(d.error);
+    } else {
+      videoDuration = d.duration || 0;
+      document.getElementById('metaTitle').textContent = d.title;
+      document.getElementById('metaSub').textContent =
+        `${d.uploader || ''}  ·  ${secondsToTs(videoDuration)}`;
+      document.getElementById('endInput').value = secondsToTs(videoDuration);
+      document.getElementById('extractBtn').disabled = false;
+      show('metaBox');
+    }
+  } catch (e) {
+    showError('Cannot reach server. Is server.py running?');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Load';
+  }
+}
+
+// ── extract ───────────────────────────────────────────────────────────────────
+
+async function extract() {
+  const url = document.getElementById('urlInput').value.trim();
+  const start = document.getElementById('startInput').value.trim() || '00:00:00';
+  const end = document.getElementById('endInput').value.trim() || secondsToTs(videoDuration);
+  const outputDir = document.getElementById('outputDir').value.trim();
+
+  hide('doneBox');
+  hide('errorBox');
+  show('progressWrap');
+  setProgress(0, 'Starting…');
+
+  document.getElementById('extractBtn').disabled = true;
+
+  try {
+    const r = await fetch(`${API}/api/extract`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, start, end, output_dir: outputDir, format: selectedFormat }),
+    });
+    const d = await r.json();
+
+    if (d.error) {
+      showError(d.error);
+      hide('progressWrap');
+      document.getElementById('extractBtn').disabled = false;
+      return;
+    }
+
+    pollJob(d.job_id);
+  } catch (e) {
+    showError('Cannot reach server. Is server.py running?');
+    hide('progressWrap');
+    document.getElementById('extractBtn').disabled = false;
+  }
+}
+
+function pollJob(job_id) {
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`${API}/api/job/${job_id}`);
+      const job = await r.json();
+
+      setProgress(job.progress || 0, job.status_msg || '');
+
+      if (job.status === 'done') {
+        hide('progressWrap');
+        document.getElementById('donePath').textContent = job.output_dir || 'Folder deschis';
+        show('doneBox');
+        document.getElementById('extractBtn').disabled = false;
+      } else if (job.status === 'error') {
+        hide('progressWrap');
+        showError(job.error || 'Unknown error');
+        document.getElementById('extractBtn').disabled = false;
+      } else {
+        pollJob(job_id); // keep polling
+      }
+    } catch (_) {
+      pollJob(job_id);
+    }
+  }, 800);
+}
+
+// ── browse folder ─────────────────────────────────────────────────────────────
+
+async function browseFolder() {
+  try {
+    const r = await fetch(`${API}/api/browse`);
+    const d = await r.json();
+    if (d.path) document.getElementById('outputDir').value = d.path;
+  } catch (_) {}
+}
+
+// ── keyboard shortcuts ────────────────────────────────────────────────────────
+
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadMeta();
+});
+
+// Smart paste handler — works from any input field.
+// Detects URL + timestamps in the pasted text and fills all fields at once.
+function applySmartPaste(text, pastedIntoId) {
+  const url = extractUrl(text);
+  const ts  = extractTimestamps(text);
+
+  // Nothing useful — fall through to default paste
+  if (!url && ts.length === 0) return false;
+
+  if (url) document.getElementById('urlInput').value = url;
+
+  if (ts.length >= 2) {
+    document.getElementById('startInput').value = secondsToTs(Math.max(0, parseTs(ts[0]) - 1));
+    document.getElementById('endInput').value   = secondsToTs(parseTs(ts[1]) + 1);
+  } else if (ts.length === 1) {
+    const secs = parseTs(ts[0]);
+    if (pastedIntoId === 'endInput') {
+      document.getElementById('endInput').value = secondsToTs(secs + 1);
+    } else {
+      document.getElementById('startInput').value = secondsToTs(Math.max(0, secs - 1));
+    }
+  }
+
+  return true; // handled
+}
+
+// Paste on URL field: handle full messages (URL + timestamps)
+document.getElementById('urlInput').addEventListener('paste', e => {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  // Only intercept if timestamps are present alongside the URL
+  if (extractTimestamps(text).length > 0) {
+    e.preventDefault();
+    applySmartPaste(text, 'urlInput');
+  }
+  // URL-only paste → default behavior, nothing to do
+});
+
+// Auto-format time inputs (allow typing freely, enforce on blur)
+// Arrow up/down = ±1 second
+// Paste: smart detection of URL + timestamps in any format
+['startInput', 'endInput'].forEach(id => {
+  const el = document.getElementById(id);
+
+  el.addEventListener('blur', e => {
+    const v = e.target.value.trim();
+    if (!v) return;
+    e.target.value = secondsToTs(parseTs(v));
+  });
+
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const delta = e.key === 'ArrowUp' ? 1 : -1;
+    const secs = Math.max(0, parseTs(el.value.trim()) + delta);
+    el.value = secondsToTs(secs);
+  });
+
+  el.addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (applySmartPaste(text, id)) e.preventDefault();
+  });
+});
+
+// ── utils ─────────────────────────────────────────────────────────────────────
+
+function extractUrl(text) {
+  const m = text.match(/https?:\/\/[^\s\n"']+/);
+  return m ? m[0].replace(/[.,;)>\]]+$/, '') : null; // trim trailing punctuation
+}
+
+function extractTimestamps(text) {
+  // 1. normalize common separator variants
+  text = text
+    .replace(/;/g, ':')            // 00;26 → 00:26
+    .replace(/[–—→]/g, ' - ')     // em/en dash, arrow → hyphen
+    .replace(/\bat\b/gi, ' ')      // "at 1:30" → "1:30"
+
+  // 2. convert dot-separated time (00.26.00 or 00.26) → colons
+  //    only when surrounded by digits and looks like time (max 2 digits per segment)
+  text = text.replace(/\b(\d{1,2})\.(\d{2})(?:\.(\d{2}))?\b/g, (_, h, m, s) =>
+    s !== undefined ? `${h}:${m}:${s}` : `${h}:${m}`
+  );
+
+  // 3. convert Xm Ys / XmYs → MM:SS
+  text = text.replace(/\b(\d{1,2})\s*m\s*(\d{1,2})\s*s\b/gi, (_, m, s) =>
+    `${m.padStart(2,'0')}:${s.padStart(2,'0')}`
+  );
+
+  // 4. drop SMPTE frame component HH:MM:SS:FF → HH:MM:SS
+  text = text.replace(/(\d{1,2}:\d{2}:\d{2}):\d{2}/g, '$1');
+
+  // 5. extract all timestamp tokens (HH:MM:SS or MM:SS)
+  const re = /(\d{1,2}:\d{2}(?::\d{2})?)/g;
+  return [...text.matchAll(re)].map(m => m[1]);
+}
+
+function parseTs(s) {
+  s = String(s)
+    .replace(/;/g, ':')
+    .replace(/\b(\d{1,2})\.(\d{2})(?:\.(\d{2}))?\b/g, (_, h, m, sec) =>
+      sec !== undefined ? `${h}:${m}:${sec}` : `${h}:${m}`)
+    .replace(/\b(\d{1,2})\s*m\s*(\d{1,2})\s*s\b/gi, (_, m, sec) =>
+      `${m.padStart(2,'0')}:${sec.padStart(2,'0')}`)
+    .replace(/(\d{1,2}:\d{2}:\d{2}):\d{2}/, '$1'); // strip SMPTE frames
+  const m = s.match(/\d{1,2}:\d{2}(?::\d{2})?/);
+  if (!m) return Number(s.replace(/[^0-9.]/g,'')) || 0;
+  const parts = m[0].split(':').map(Number);
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return parts[0] * 60 + parts[1];
+}
+
+function secondsToTs(s) {
+  s = Math.floor(s || 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function show(id) { document.getElementById(id).classList.add('visible'); }
+function hide(id) { document.getElementById(id).classList.remove('visible'); }
+
+function setProgress(pct, msg) {
+  document.getElementById('progressBar').style.width = `${Math.min(pct, 100)}%`;
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+function showError(msg) {
+  document.getElementById('errorText').textContent = msg;
+  show('errorBox');
+}
+</script>
+</body>
+</html>
