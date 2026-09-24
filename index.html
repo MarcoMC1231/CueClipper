@@ -4,359 +4,472 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CueClipper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.hidden { display: none !important; }
+.visible { display: block !important; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #111;
-    color: #e0e0e0;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 40px 16px;
-  }
+:root {
+  --bg:        #0c0b14;
+  --card:      #161428;
+  --border:    rgba(255,255,255,0.08);
+  --border-hi: rgba(255,255,255,0.14);
+  --accent:    #e8622a;
+  --text:      rgba(255,255,255,0.9);
+  --muted:     rgba(255,255,255,0.38);
+  --subtle:    rgba(255,255,255,0.16);
+}
 
-  .card {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 520px;
-    padding: 28px 28px 24px;
-  }
+body {
+  font-family: 'Raleway', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 36px 16px 60px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button, input, select, textarea { font-family: 'Raleway', sans-serif; }
 
-  h1 {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: #fff;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+/* Ambient glow */
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 30% 20%, rgba(99,60,180,0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 70% 60%, rgba(232,98,42,0.05) 0%, transparent 70%);
+}
 
-  h1 .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #ff4444;
-    flex-shrink: 0;
-  }
+.wrap { width: 100%; max-width: 480px; position: relative; }
 
-  label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #888;
-    margin-bottom: 6px;
-  }
+/* ── Nav ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px;
+}
+.logo {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #fff;
+}
+.logo-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: linear-gradient(135deg, #e8622a, #f09040);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(232,98,42,0.32);
+}
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 99px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  font-size: 11px; color: var(--muted);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+.status-dot.warn { background: #facc15; }
+.pulse { animation: pulse-anim 2s ease-in-out infinite; }
+@keyframes pulse-anim { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
-  input[type="text"], input[type="url"] {
-    width: 100%;
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 7px;
-    color: #e0e0e0;
-    font-size: 13px;
-    padding: 9px 12px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  input:focus { border-color: #ff4444; }
+/* Settings cog */
+.settings-rel { position: relative; }
+.cog-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+}
+.cog-btn:hover { background: rgba(255,255,255,0.08); }
 
-  .section { margin-bottom: 20px; }
+/* Settings dropdown */
+.dd {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 252px; z-index: 200;
+  background: #1a1730; border: 1px solid var(--border-hi);
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+}
+.dd-sec { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.dd-sec:last-child { border-bottom: none; }
+.dd-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.dd-opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 7px; border-radius: 7px; cursor: pointer; transition: background 0.1s;
+}
+.dd-opt:hover { background: rgba(255,255,255,0.05); }
+.dd-opt span { font-size: 12px; color: rgba(255,255,255,0.55); }
+.dd-opt.on span { color: #fff; }
+.radio {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.radio.on { border-color: var(--accent); }
+.radio .rdot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.dd-folder { display: flex; gap: 6px; margin-top: 4px; }
+.dd-folder input {
+  flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  border-radius: 7px; font-size: 11px; padding: 6px 8px;
+  color: rgba(255,255,255,0.65) !important; outline: none;
+  font-family: 'Raleway', sans-serif;
+}
+.dd-folder button {
+  padding: 6px 10px; border-radius: 7px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  color: var(--muted); font-size: 10px; cursor: pointer; white-space: nowrap;
+  transition: background 0.1s;
+}
+.dd-folder button:hover { background: rgba(255,255,255,0.09); }
 
-  .row { display: flex; gap: 12px; }
-  .row .section { flex: 1; }
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 24px 60px rgba(0,0,0,0.5);
+}
+.section {
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.055);
+}
+.section:last-child { border-bottom: none; }
+.sec-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+}
 
-  .url-row { display: flex; gap: 10px; align-items: flex-end; }
-  .url-row input { flex: 1; }
+/* ── yt-dlp warning ── */
+.ytdlp-warn {
+  margin: 16px 22px 0;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(250,204,21,0.08); border: 1px solid rgba(250,204,21,0.2);
+  font-size: 12px; color: rgba(250,204,21,0.85);
+  display: none;
+}
+.ytdlp-warn.visible { display: block; }
+.ytdlp-warn code { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
-  button {
-    background: #ff4444;
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 9px 16px;
-    cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  button:hover:not(:disabled) { background: #e03030; }
-  button:disabled { opacity: 0.35; cursor: not-allowed; }
+/* ── Inputs ── */
+input[type="text"], input[type="url"] {
+  color: var(--text) !important;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px; padding: 10px 13px;
+  width: 100%; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: 'Raleway', sans-serif;
+}
+input::placeholder { color: var(--subtle) !important; }
+input:focus {
+  border-color: rgba(232,98,42,0.45);
+  box-shadow: 0 0 0 3px rgba(232,98,42,0.07);
+}
 
-  .btn-secondary {
-    background: #2a2a2a;
-    color: #ccc;
-  }
-  .btn-secondary:hover:not(:disabled) { background: #333; }
+/* ── URL row ── */
+.url-row { display: flex; gap: 8px; }
+.url-row input { flex: 1; }
+.load-btn {
+  flex-shrink: 0; padding: 10px 16px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border-hi);
+  border-radius: 10px; color: rgba(255,255,255,0.65);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; letter-spacing: 0.03em;
+}
+.load-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); color: #fff; }
+.load-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .btn-extract {
-    width: 100%;
-    padding: 12px;
-    font-size: 13px;
-    margin-top: 8px;
-  }
+/* ── Thumbnail / meta box ── */
+.thumb-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+  margin-top: 12px;
+}
+.thumb-img-wrap {
+  width: 80px; height: 45px; border-radius: 7px;
+  background: rgba(255,255,255,0.06); flex-shrink: 0; overflow: hidden;
+}
+.thumb-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.meta-title { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.82); line-height: 1.35; }
+.meta-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  .meta-box {
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 7px;
-    padding: 12px 14px;
-    min-height: 52px;
-    margin-bottom: 20px;
-    display: none;
-  }
-  .meta-box.visible { display: block; }
-  .meta-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: #e0e0e0;
-    margin-bottom: 4px;
-    line-height: 1.3;
-  }
-  .meta-sub {
-    font-size: 11px;
-    color: #666;
-  }
+/* ── Range ── */
+.range-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.range-right { display: flex; align-items: center; gap: 8px; }
+.dur-badge {
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted); background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
+}
+.chips { display: flex; gap: 6px; }
+.chip {
+  padding: 4px 11px; border-radius: 99px;
+  border: 1px solid var(--border-hi); background: transparent;
+  color: var(--muted); font-size: 11px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; font-family: 'Raleway', sans-serif;
+}
+.chip:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.75); }
+.chip.active {
+  background: rgba(232,98,42,0.14); border-color: rgba(232,98,42,0.5); color: #f09050;
+}
 
-  .time-input-wrapper {
-    position: relative;
-  }
-  .time-input-wrapper input {
-    font-family: "Courier New", monospace;
-    letter-spacing: 0.06em;
-    padding-right: 36px;
-  }
-  .time-input-wrapper .paste-ts {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #555;
-    font-size: 14px;
-    cursor: pointer;
-    padding: 2px 4px;
-    border-radius: 4px;
-  }
-  .time-input-wrapper .paste-ts:hover { color: #ff4444; background: none; }
+.range-row { display: flex; align-items: flex-end; gap: 8px; }
+.range-field { flex: 1; }
+.field-lbl { font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+input.mono {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 16px !important; font-weight: 500 !important;
+  color: #fff !important; letter-spacing: 0.04em; text-align: center;
+  padding-right: 32px;
+}
+.ts-wrap { position: relative; }
+.ts-paste {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--subtle);
+  font-size: 14px; cursor: pointer; padding: 2px 4px; border-radius: 4px;
+  transition: color 0.15s;
+}
+.ts-paste:hover { color: var(--accent); background: none; }
 
-  .output-row { display: flex; gap: 10px; align-items: flex-end; }
-  .output-row input { flex: 1; font-size: 11px; color: #888; }
+.whole-btn {
+  flex-shrink: 0; width: 38px; height: 42px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer; color: var(--muted); font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.whole-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.whole-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
-  /* Progress */
-  .progress-wrap {
-    margin-top: 16px;
-    display: none;
-  }
-  .progress-wrap.visible { display: block; }
+/* ── Output folder ── */
+.folder-row { display: flex; gap: 8px; }
+.folder-row input { flex: 1; font-size: 12px !important; color: var(--muted) !important; }
+.browse-btn {
+  flex-shrink: 0; padding: 10px 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--muted);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.browse-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
 
-  .progress-bar-bg {
-    background: #222;
-    border-radius: 4px;
-    height: 4px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: #ff4444;
-    border-radius: 4px;
-    width: 0%;
-    transition: width 0.3s;
-  }
+/* ── Extract button ── */
+.extract-btn {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, #e8622a 0%, #f09040 100%);
+  border: none; border-radius: 10px;
+  color: #fff; font-size: 14px; font-weight: 600;
+  font-family: 'Raleway', sans-serif; letter-spacing: 0.02em; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(232,98,42,0.28), inset 0 1px 0 rgba(255,255,255,0.14);
+  transition: box-shadow 0.2s, transform 0.15s, opacity 0.15s;
+}
+.extract-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 30px rgba(232,98,42,0.42), inset 0 1px 0 rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+.extract-btn:active:not(:disabled) { transform: translateY(0); }
+.extract-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
 
-  .status-msg {
-    font-size: 11px;
-    color: #666;
-    font-family: "Courier New", monospace;
-    min-height: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+/* ── Progress ── */
+.progress-wrap { display: none; margin-top: 14px; }
+.progress-wrap.visible { display: block; }
+.prog-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.prog-track { height: 3px; border-radius: 99px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.prog-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #e8622a, #f09040);
+  width: 0%; transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(232,98,42,0.55);
+}
 
-  .done-box {
-    background: #1a2a1a;
-    border: 1px solid #2a4a2a;
-    border-radius: 7px;
-    padding: 12px 14px;
-    margin-top: 12px;
-    display: none;
-  }
-  .done-box.visible { display: block; }
-  .done-box .done-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #5a5;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
-  }
-  .done-box .done-path {
-    font-size: 11px;
-    color: #888;
-    font-family: "Courier New", monospace;
-    word-break: break-all;
-  }
+/* ── Done box ── */
+.done-box {
+  display: none; margin-top: 12px;
+  padding: 11px 14px; border-radius: 10px;
+  background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.18);
+}
+.done-box.visible { display: block; }
+.done-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(74,222,128,0.85); margin-bottom: 4px;
+}
+.done-path { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; word-break: break-all; }
 
-  .error-box {
-    background: #2a1a1a;
-    border: 1px solid #4a2a2a;
-    border-radius: 7px;
-    padding: 12px 14px;
-    margin-top: 12px;
-    display: none;
-  }
-  .error-box.visible { display: block; }
-  .error-box pre {
-    font-size: 11px;
-    color: #c55;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-family: "Courier New", monospace;
-  }
+/* ── Error box ── */
+.error-box {
+  display: none; margin-top: 12px;
+  padding: 11px 14px; border-radius: 10px;
+  background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.18);
+}
+.error-box.visible { display: block; }
+.error-box pre { font-size: 11px; color: rgba(252,165,165,0.85); white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', monospace; }
 
-  .ytdlp-warn {
-    background: #2a2a1a;
-    border: 1px solid #4a4a2a;
-    border-radius: 7px;
-    padding: 10px 14px;
-    font-size: 11px;
-    color: #aa8;
-    margin-bottom: 20px;
-    display: none;
-  }
-  .ytdlp-warn.visible { display: block; }
+/* ── Shimmer ── */
+@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+.shimmer {
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 800px 100%; animation: shimmer 1.8s infinite;
+}
 
-  .divider {
-    border: none;
-    border-top: 1px solid #222;
-    margin: 20px 0;
-  }
-
-  .toggle-group {
-    display: flex;
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 7px;
-    padding: 3px;
-    gap: 3px;
-  }
-  .toggle-btn {
-    flex: 1;
-    background: transparent;
-    color: #555;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 7px 12px;
-    border-radius: 5px;
-    white-space: nowrap;
-  }
-  .toggle-btn.active { background: #ff4444; color: #fff; }
-  .toggle-btn:hover:not(:disabled):not(.active) { background: #222; color: #aaa; }
-  .toggle-btn.active:hover:not(:disabled) { background: #e03030; }
-
-  .btn-icon {
-    background: #2a2a2a;
-    color: #666;
-    padding: 9px 11px;
-    font-size: 15px;
-    flex-shrink: 0;
-    margin-bottom: 20px;
-  }
-  .btn-icon:hover:not(:disabled) { background: #333; color: #ccc; }
+/* ── Footer ── */
+.footer { text-align: center; margin-top: 18px; font-size: 10px; color: rgba(255,255,255,0.12); letter-spacing: 0.04em; }
 </style>
 </head>
 <body>
-<div class="card">
-  <h1><span class="dot"></span>CueClipper</h1>
+<div class="wrap">
 
-  <div class="ytdlp-warn" id="ytdlpWarn">
-    yt-dlp not found. Install with: <code>pip install yt-dlp</code>
-  </div>
-
-  <!-- URL -->
-  <div class="section">
-    <label>YouTube URL</label>
-    <div class="url-row">
-      <input type="url" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." />
-      <button id="loadBtn" onclick="loadMeta()">Load</button>
+  <!-- Nav -->
+  <nav>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M2.5 10V3l6 3.5-6 3.5z" fill="white"/>
+          <rect x="9" y="3" width="1.5" height="7" rx="0.75" fill="white" opacity="0.7"/>
+          <rect x="11.2" y="3" width="1.3" height="7" rx="0.65" fill="white" opacity="0.45"/>
+        </svg>
+      </div>
+      CueClipper
     </div>
-  </div>
-
-  <!-- Meta -->
-  <div class="meta-box" id="metaBox">
-    <div class="meta-title" id="metaTitle"></div>
-    <div class="meta-sub" id="metaSub"></div>
-  </div>
-
-  <!-- Timestamps -->
-  <div class="row" style="align-items: flex-end;">
-    <div class="section">
-      <label>Start</label>
-      <div class="time-input-wrapper">
-        <input type="text" id="startInput" placeholder="00:00:00" value="00:00:00" />
+    <div class="nav-right">
+      <div class="status-pill">
+        <div class="status-dot pulse" id="statusDot"></div>
+        <span id="statusLabel">Ready</span>
+      </div>
+      <div class="settings-rel">
+        <button class="cog-btn" onclick="toggleDD()" title="Settings">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.3">
+            <circle cx="7.5" cy="7.5" r="2.3"/>
+            <path d="M7.5 1.5v1.5M7.5 12v1.5M1.5 7.5H3M12 7.5h1.5M3.4 3.4l1.06 1.06M10.54 10.54l1.06 1.06M11.6 3.4l-1.06 1.06M4.46 10.54l-1.06 1.06" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="dd hidden" id="dd">
+          <div class="dd-sec">
+            <div class="dd-lbl">Max Resolution</div>
+            <div class="dd-opt on" onclick="setRes(this,'best')"><div class="radio on"><div class="rdot"></div></div><span>Best available</span></div>
+            <div class="dd-opt" onclick="setRes(this,'2160')"><div class="radio"></div><span>4K (2160p)</span></div>
+            <div class="dd-opt" onclick="setRes(this,'1440')"><div class="radio"></div><span>1440p</span></div>
+            <div class="dd-opt" onclick="setRes(this,'1080')"><div class="radio"></div><span>1080p</span></div>
+            <div class="dd-opt" onclick="setRes(this,'720')"><div class="radio"></div><span>720p</span></div>
+            <div class="dd-opt" onclick="setRes(this,'480')"><div class="radio"></div><span>480p</span></div>
+          </div>
+          <div class="dd-sec">
+            <div class="dd-lbl">Default Download Folder</div>
+            <div class="dd-folder">
+              <input type="text" id="ddFolder" placeholder="e.g. C:\Downloads\YT Extracts" oninput="saveDefaultFolder()" />
+              <button onclick="browseDefaultFolder()">Browse</button>
+            </div>
+          </div>
+          <div class="dd-sec">
+            <div class="dd-lbl">Appearance</div>
+            <div class="dd-opt on" onclick="setTheme(this,'dark')"><div class="radio on"><div class="rdot"></div></div><span>Dark</span></div>
+            <div class="dd-opt" onclick="setTheme(this,'light')"><div class="radio"></div><span>Light</span></div>
+          </div>
+        </div>
       </div>
     </div>
+  </nav>
+
+  <!-- Card -->
+  <div class="card">
+
+    <!-- yt-dlp warning -->
+    <div class="ytdlp-warn" id="ytdlpWarn">
+      yt-dlp not found. Install with: <code>pip install yt-dlp</code>
+    </div>
+
+    <!-- URL -->
     <div class="section">
-      <label>End</label>
-      <div class="time-input-wrapper">
-        <input type="text" id="endInput" placeholder="00:00:00" value="00:00:00" />
+      <div class="sec-label">Source</div>
+      <div class="url-row">
+        <input type="url" id="urlInput" placeholder="Paste YouTube URL" />
+        <button class="load-btn" id="loadBtn" onclick="loadMeta()">Load</button>
+      </div>
+
+      <!-- Thumbnail / meta (hidden until loaded) -->
+      <div id="metaBox" class="thumb-card" style="display:none;">
+        <div class="thumb-img-wrap">
+          <div class="shimmer" id="thumbShimmer"></div>
+          <img id="thumbImg" style="display:none;" alt="" />
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="meta-title" id="metaTitle"></div>
+          <div class="meta-sub" id="metaSub"></div>
+        </div>
       </div>
     </div>
-    <button class="btn-icon" onclick="selectWholeClip()" title="Select whole clip">↔</button>
-  </div>
 
-  <!-- Format -->
-  <div class="section">
-    <label>Format</label>
-    <div class="toggle-group">
-      <button class="toggle-btn active" id="fmtMp4" onclick="setFormat('mp4')">MP4</button>
-      <button class="toggle-btn" id="fmtMp3" onclick="setFormat('mp3')">MP3</button>
+    <!-- Time range -->
+    <div class="section">
+      <div class="range-hdr">
+        <div class="sec-label" style="margin-bottom:0;">Time Range</div>
+        <div class="range-right">
+          <span class="dur-badge" id="durBadge">—</span>
+          <div class="chips">
+            <button class="chip active" id="fmtMp4" onclick="setFormat('mp4')">MP4</button>
+            <button class="chip" id="fmtMp3" onclick="setFormat('mp3')">MP3</button>
+          </div>
+        </div>
+      </div>
+      <div class="range-row" style="margin-top:10px;">
+        <div class="range-field">
+          <div class="field-lbl">In</div>
+          <div class="ts-wrap">
+            <input type="text" class="mono" id="startInput" placeholder="00:00:00" value="00:00:00" />
+          </div>
+        </div>
+        <button class="whole-btn" id="wholeBtn" onclick="selectWholeClip()" title="Select whole clip" disabled>↔</button>
+        <div class="range-field">
+          <div class="field-lbl">Out</div>
+          <div class="ts-wrap">
+            <input type="text" class="mono" id="endInput" placeholder="00:00:00" value="00:00:00" />
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Output folder -->
-  <div class="section">
-    <label>Output folder</label>
-    <div class="output-row">
-      <input type="text" id="outputDir" />
-      <button class="btn-secondary" onclick="browseFolder()">Browse</button>
+    <!-- Output folder -->
+    <div class="section">
+      <div class="sec-label">Output Folder</div>
+      <div class="folder-row">
+        <input type="text" id="outputDir" placeholder="Select output folder…" />
+        <button class="browse-btn" onclick="browseFolder()">Browse</button>
+      </div>
     </div>
-  </div>
 
-  <button class="btn-extract" id="extractBtn" onclick="extract()" disabled>Extract Clip</button>
+    <!-- Extract -->
+    <div class="section">
+      <button class="extract-btn" id="extractBtn" onclick="extract()" disabled>Extract Clip</button>
 
-  <!-- Progress -->
-  <div class="progress-wrap" id="progressWrap">
-    <div class="progress-bar-bg">
-      <div class="progress-bar-fill" id="progressBar"></div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="prog-row">
+          <span id="statusMsg">Starting…</span>
+          <span id="progPct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="done-box" id="doneBox">
+        <div class="done-title">Done</div>
+        <div class="done-path" id="donePath"></div>
+      </div>
+
+      <div class="error-box" id="errorBox">
+        <pre id="errorText"></pre>
+      </div>
     </div>
-    <div class="status-msg" id="statusMsg">Starting…</div>
+
   </div>
 
-  <div class="done-box" id="doneBox">
-    <div class="done-title">Done</div>
-    <div class="done-path" id="donePath"></div>
-  </div>
-
-  <div class="error-box" id="errorBox">
-    <pre id="errorText"></pre>
-  </div>
+  <div class="footer">yt-dlp · ffmpeg · visionos client</div>
 </div>
 
 <script>
@@ -364,6 +477,60 @@ const API = 'http://localhost:7433';
 let videoDuration = 0;
 let pollTimer = null;
 let selectedFormat = 'mp4';
+let selectedResolution = 'best';
+
+// ── Settings dropdown ──────────────────────────────────────────────────────────
+
+function toggleDD() { document.getElementById('dd').classList.toggle('hidden'); }
+document.addEventListener('click', e => {
+  const rel = document.querySelector('.settings-rel');
+  if (rel && !rel.contains(e.target)) document.getElementById('dd').classList.add('hidden');
+});
+
+function setRes(el, val) {
+  selectedResolution = val;
+  el.closest('.dd-sec').querySelectorAll('.dd-opt').forEach(o => {
+    o.classList.remove('on');
+    o.querySelector('.radio').classList.remove('on');
+    const d = o.querySelector('.rdot'); if (d) d.remove();
+  });
+  el.classList.add('on');
+  el.querySelector('.radio').classList.add('on');
+  const dot = document.createElement('div'); dot.className = 'rdot';
+  el.querySelector('.radio').appendChild(dot);
+}
+
+function setTheme(el, val) {
+  el.closest('.dd-sec').querySelectorAll('.dd-opt').forEach(o => {
+    o.classList.remove('on');
+    o.querySelector('.radio').classList.remove('on');
+    const d = o.querySelector('.rdot'); if (d) d.remove();
+  });
+  el.classList.add('on');
+  el.querySelector('.radio').classList.add('on');
+  const dot = document.createElement('div'); dot.className = 'rdot';
+  el.querySelector('.radio').appendChild(dot);
+  // light mode: could be added later
+}
+
+function saveDefaultFolder() {
+  const v = document.getElementById('ddFolder').value.trim();
+  if (v) localStorage.setItem('cue_default_folder', v);
+}
+
+async function browseDefaultFolder() {
+  try {
+    const r = await fetch(`${API}/api/browse`);
+    const d = await r.json();
+    if (d.path) {
+      document.getElementById('ddFolder').value = d.path;
+      document.getElementById('outputDir').value = d.path;
+      localStorage.setItem('cue_default_folder', d.path);
+    }
+  } catch (_) {}
+}
+
+// ── Format ────────────────────────────────────────────────────────────────────
 
 function setFormat(fmt) {
   selectedFormat = fmt;
@@ -371,37 +538,60 @@ function setFormat(fmt) {
   document.getElementById('fmtMp3').classList.toggle('active', fmt === 'mp3');
 }
 
+// ── Select whole clip (↔ button) ──────────────────────────────────────────────
+
 function selectWholeClip() {
   document.getElementById('startInput').value = '00:00:00';
   document.getElementById('endInput').value = secondsToTs(videoDuration);
+  updateDurBadge();
 }
 
-// ── init ─────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 
 (async () => {
+  // restore default folder from localStorage
+  const saved = localStorage.getItem('cue_default_folder');
+  if (saved) {
+    document.getElementById('outputDir').value = saved;
+    document.getElementById('ddFolder').value = saved;
+  }
+
   try {
     const r = await fetch(`${API}/api/status`);
     const d = await r.json();
-    if (!d.ok) document.getElementById('ytdlpWarn').classList.add('visible');
-    if (d.default_output) document.getElementById('outputDir').value = d.default_output;
+    if (!d.ok) {
+      document.getElementById('ytdlpWarn').classList.add('visible');
+      document.getElementById('statusDot').classList.remove('pulse');
+      document.getElementById('statusDot').classList.add('warn');
+      document.getElementById('statusLabel').textContent = 'yt-dlp missing';
+    }
+    if (d.default_output && !saved) {
+      document.getElementById('outputDir').value = d.default_output;
+      document.getElementById('ddFolder').value = d.default_output;
+    }
   } catch (_) {
-    document.getElementById('outputDir').value = 'Downloads\\YT Extracts';
+    if (!saved) document.getElementById('outputDir').value = 'Downloads\\YT Extracts';
   }
 })();
 
-// ── metadata ─────────────────────────────────────────────────────────────────
+// ── Metadata ──────────────────────────────────────────────────────────────────
 
 async function loadMeta() {
   const url = document.getElementById('urlInput').value.trim();
   if (!url) return;
 
   const btn = document.getElementById('loadBtn');
-  btn.disabled = true;
-  btn.textContent = '…';
+  btn.disabled = true; btn.textContent = '…';
 
-  hide('metaBox');
-  hide('doneBox');
-  hide('errorBox');
+  // Reset thumb / meta
+  const metaBox = document.getElementById('metaBox');
+  metaBox.style.display = 'flex';
+  document.getElementById('thumbShimmer').style.display = 'block';
+  document.getElementById('thumbImg').style.display = 'none';
+  document.getElementById('metaTitle').textContent = 'Loading…';
+  document.getElementById('metaSub').textContent = '';
+
+  hide('doneBox'); hide('errorBox');
 
   try {
     const r = await fetch(`${API}/api/metadata`, {
@@ -412,37 +602,48 @@ async function loadMeta() {
     const d = await r.json();
 
     if (d.error) {
+      metaBox.style.display = 'none';
       showError(d.error);
     } else {
       videoDuration = d.duration || 0;
-      document.getElementById('metaTitle').textContent = d.title;
+
+      // Thumbnail
+      document.getElementById('thumbShimmer').style.display = 'none';
+      const img = document.getElementById('thumbImg');
+      if (d.thumbnail) {
+        img.src = d.thumbnail;
+        img.style.display = 'block';
+        img.onerror = () => { img.style.display = 'none'; };
+      }
+
+      document.getElementById('metaTitle').textContent = d.title || 'Unknown';
       document.getElementById('metaSub').textContent =
-        `${d.uploader || ''}  ·  ${secondsToTs(videoDuration)}`;
+        (d.uploader ? d.uploader + '  ·  ' : '') + secondsToTs(videoDuration);
+
       document.getElementById('endInput').value = secondsToTs(videoDuration);
       document.getElementById('extractBtn').disabled = false;
-      show('metaBox');
+      document.getElementById('wholeBtn').disabled = false;
+      updateDurBadge();
     }
   } catch (e) {
+    metaBox.style.display = 'none';
     showError('Cannot reach server. Is server.py running?');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Load';
+    btn.disabled = false; btn.textContent = 'Load';
   }
 }
 
-// ── extract ───────────────────────────────────────────────────────────────────
+// ── Extract ───────────────────────────────────────────────────────────────────
 
 async function extract() {
-  const url = document.getElementById('urlInput').value.trim();
-  const start = document.getElementById('startInput').value.trim() || '00:00:00';
-  const end = document.getElementById('endInput').value.trim() || secondsToTs(videoDuration);
+  const url       = document.getElementById('urlInput').value.trim();
+  const start     = document.getElementById('startInput').value.trim() || '00:00:00';
+  const end       = document.getElementById('endInput').value.trim()   || secondsToTs(videoDuration);
   const outputDir = document.getElementById('outputDir').value.trim();
 
-  hide('doneBox');
-  hide('errorBox');
+  hide('doneBox'); hide('errorBox');
   show('progressWrap');
   setProgress(0, 'Starting…');
-
   document.getElementById('extractBtn').disabled = true;
 
   try {
@@ -454,12 +655,10 @@ async function extract() {
     const d = await r.json();
 
     if (d.error) {
-      showError(d.error);
-      hide('progressWrap');
+      showError(d.error); hide('progressWrap');
       document.getElementById('extractBtn').disabled = false;
       return;
     }
-
     pollJob(d.job_id);
   } catch (e) {
     showError('Cannot reach server. Is server.py running?');
@@ -472,14 +671,14 @@ function pollJob(job_id) {
   clearTimeout(pollTimer);
   pollTimer = setTimeout(async () => {
     try {
-      const r = await fetch(`${API}/api/job/${job_id}`);
+      const r   = await fetch(`${API}/api/job/${job_id}`);
       const job = await r.json();
 
       setProgress(job.progress || 0, job.status_msg || '');
 
       if (job.status === 'done') {
         hide('progressWrap');
-        document.getElementById('donePath').textContent = job.output_dir || 'Folder deschis';
+        document.getElementById('donePath').textContent = job.output_dir || '';
         show('doneBox');
         document.getElementById('extractBtn').disabled = false;
       } else if (job.status === 'error') {
@@ -487,7 +686,7 @@ function pollJob(job_id) {
         showError(job.error || 'Unknown error');
         document.getElementById('extractBtn').disabled = false;
       } else {
-        pollJob(job_id); // keep polling
+        pollJob(job_id);
       }
     } catch (_) {
       pollJob(job_id);
@@ -495,7 +694,7 @@ function pollJob(job_id) {
   }, 800);
 }
 
-// ── browse folder ─────────────────────────────────────────────────────────────
+// ── Browse folder ─────────────────────────────────────────────────────────────
 
 async function browseFolder() {
   try {
@@ -505,19 +704,51 @@ async function browseFolder() {
   } catch (_) {}
 }
 
-// ── keyboard shortcuts ────────────────────────────────────────────────────────
+// ── Smart paste ───────────────────────────────────────────────────────────────
 
 document.getElementById('urlInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') loadMeta();
 });
 
-// Smart paste handler — works from any input field.
-// Detects URL + timestamps in the pasted text and fills all fields at once.
+document.getElementById('urlInput').addEventListener('paste', e => {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (extractTimestamps(text).length > 0) {
+    e.preventDefault();
+    applySmartPaste(text, 'urlInput');
+  }
+});
+
+['startInput', 'endInput'].forEach(id => {
+  const el = document.getElementById(id);
+
+  el.addEventListener('blur', e => {
+    const v = e.target.value.trim();
+    if (!v) return;
+    e.target.value = secondsToTs(parseTs(v));
+    updateDurBadge();
+  });
+
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const delta = e.key === 'ArrowUp' ? 1 : -1;
+    const secs  = Math.max(0, parseTs(el.value.trim()) + delta);
+    el.value = secondsToTs(secs);
+    updateDurBadge();
+  });
+
+  el.addEventListener('input', updateDurBadge);
+
+  el.addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (applySmartPaste(text, id)) e.preventDefault();
+  });
+});
+
 function applySmartPaste(text, pastedIntoId) {
   const url = extractUrl(text);
   const ts  = extractTimestamps(text);
 
-  // Nothing useful — fall through to default paste
   if (!url && ts.length === 0) return false;
 
   if (url) document.getElementById('urlInput').value = url;
@@ -534,75 +765,27 @@ function applySmartPaste(text, pastedIntoId) {
     }
   }
 
-  return true; // handled
+  updateDurBadge();
+  return true;
 }
 
-// Paste on URL field: handle full messages (URL + timestamps)
-document.getElementById('urlInput').addEventListener('paste', e => {
-  const text = (e.clipboardData || window.clipboardData).getData('text');
-  // Only intercept if timestamps are present alongside the URL
-  if (extractTimestamps(text).length > 0) {
-    e.preventDefault();
-    applySmartPaste(text, 'urlInput');
-  }
-  // URL-only paste → default behavior, nothing to do
-});
-
-// Auto-format time inputs (allow typing freely, enforce on blur)
-// Arrow up/down = ±1 second
-// Paste: smart detection of URL + timestamps in any format
-['startInput', 'endInput'].forEach(id => {
-  const el = document.getElementById(id);
-
-  el.addEventListener('blur', e => {
-    const v = e.target.value.trim();
-    if (!v) return;
-    e.target.value = secondsToTs(parseTs(v));
-  });
-
-  el.addEventListener('keydown', e => {
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-    e.preventDefault();
-    const delta = e.key === 'ArrowUp' ? 1 : -1;
-    const secs = Math.max(0, parseTs(el.value.trim()) + delta);
-    el.value = secondsToTs(secs);
-  });
-
-  el.addEventListener('paste', e => {
-    const text = (e.clipboardData || window.clipboardData).getData('text');
-    if (applySmartPaste(text, id)) e.preventDefault();
-  });
-});
-
-// ── utils ─────────────────────────────────────────────────────────────────────
+// ── Utils ─────────────────────────────────────────────────────────────────────
 
 function extractUrl(text) {
   const m = text.match(/https?:\/\/[^\s\n"']+/);
-  return m ? m[0].replace(/[.,;)>\]]+$/, '') : null; // trim trailing punctuation
+  return m ? m[0].replace(/[.,;)>\]]+$/, '') : null;
 }
 
 function extractTimestamps(text) {
-  // 1. normalize common separator variants
   text = text
-    .replace(/;/g, ':')            // 00;26 → 00:26
-    .replace(/[–—→]/g, ' - ')     // em/en dash, arrow → hyphen
-    .replace(/\bat\b/gi, ' ')      // "at 1:30" → "1:30"
-
-  // 2. convert dot-separated time (00.26.00 or 00.26) → colons
-  //    only when surrounded by digits and looks like time (max 2 digits per segment)
+    .replace(/;/g, ':')
+    .replace(/[–—→]/g, ' - ')
+    .replace(/\bat\b/gi, ' ');
   text = text.replace(/\b(\d{1,2})\.(\d{2})(?:\.(\d{2}))?\b/g, (_, h, m, s) =>
-    s !== undefined ? `${h}:${m}:${s}` : `${h}:${m}`
-  );
-
-  // 3. convert Xm Ys / XmYs → MM:SS
+    s !== undefined ? `${h}:${m}:${s}` : `${h}:${m}`);
   text = text.replace(/\b(\d{1,2})\s*m\s*(\d{1,2})\s*s\b/gi, (_, m, s) =>
-    `${m.padStart(2,'0')}:${s.padStart(2,'0')}`
-  );
-
-  // 4. drop SMPTE frame component HH:MM:SS:FF → HH:MM:SS
+    `${m.padStart(2,'0')}:${s.padStart(2,'0')}`);
   text = text.replace(/(\d{1,2}:\d{2}:\d{2}):\d{2}/g, '$1');
-
-  // 5. extract all timestamp tokens (HH:MM:SS or MM:SS)
   const re = /(\d{1,2}:\d{2}(?::\d{2})?)/g;
   return [...text.matchAll(re)].map(m => m[1]);
 }
@@ -614,7 +797,7 @@ function parseTs(s) {
       sec !== undefined ? `${h}:${m}:${sec}` : `${h}:${m}`)
     .replace(/\b(\d{1,2})\s*m\s*(\d{1,2})\s*s\b/gi, (_, m, sec) =>
       `${m.padStart(2,'0')}:${sec.padStart(2,'0')}`)
-    .replace(/(\d{1,2}:\d{2}:\d{2}):\d{2}/, '$1'); // strip SMPTE frames
+    .replace(/(\d{1,2}:\d{2}:\d{2}):\d{2}/, '$1');
   const m = s.match(/\d{1,2}:\d{2}(?::\d{2})?/);
   if (!m) return Number(s.replace(/[^0-9.]/g,'')) || 0;
   const parts = m[0].split(':').map(Number);
@@ -624,10 +807,18 @@ function parseTs(s) {
 
 function secondsToTs(s) {
   s = Math.floor(s || 0);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
+  const h   = Math.floor(s / 3600);
+  const m   = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function updateDurBadge() {
+  const s = parseTs(document.getElementById('startInput').value);
+  const e = parseTs(document.getElementById('endInput').value);
+  const diff = Math.max(0, e - s);
+  const m = Math.floor(diff / 60), sec = diff % 60;
+  document.getElementById('durBadge').textContent = diff > 0 ? `${m}:${String(sec).padStart(2,'0')}` : '—';
 }
 
 function show(id) { document.getElementById(id).classList.add('visible'); }
@@ -635,7 +826,8 @@ function hide(id) { document.getElementById(id).classList.remove('visible'); }
 
 function setProgress(pct, msg) {
   document.getElementById('progressBar').style.width = `${Math.min(pct, 100)}%`;
-  document.getElementById('statusMsg').textContent = msg;
+  document.getElementById('statusMsg').textContent   = msg;
+  document.getElementById('progPct').textContent     = `${Math.round(pct)}%`;
 }
 
 function showError(msg) {
