@@ -2,6 +2,7 @@
 import atexit
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -201,17 +202,41 @@ def run_extract(job_id, url, start, end, output_dir, fmt="mp4"):
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 text=True, errors="replace", creationflags=_NO_WINDOW)
         lines = []
+        stream_index = 0   # current stream being downloaded (1-based; 0 = unknown/single)
+        total_streams = 1  # total streams in this job (1 = single-file, 2 = DASH video+audio)
         for line in proc.stdout:
             line = line.rstrip()
             lines.append(line)
-            # parse progress percentage from yt-dlp [download] X.X% lines
-            if "[download]" in line and "%" in line:
-                try:
-                    pct = float(line.split("%")[0].split()[-1])
-                    job["progress"] = pct
-                    job["status_msg"] = line.strip()
-                except Exception:
-                    pass
+            # ── yt-dlp progress parsing ─────────────────────────────────────────
+            if "[download]" in line:
+                # "Downloading video N of M" — track which stream we're on
+                m = re.search(r'Downloading video (\d+) of (\d+)', line)
+                if m:
+                    stream_index = int(m.group(1))
+                    total_streams = int(m.group(2))
+                    if total_streams >= 2:
+                        job["status_msg"] = "Downloading video…" if stream_index == 1 else "Downloading audio…"
+                    else:
+                        job["status_msg"] = line.strip()
+                elif "%" in line:
+                    # Standard progress line (also covers fragment lines with "(frag X/Y)")
+                    try:
+                        pct = float(line.split("%")[0].split()[-1])
+                        if total_streams >= 2:
+                            # Two-stream DASH: map stream 1 → 0–50%, stream 2 → 50–95%
+                            if stream_index <= 1:
+                                job["progress"] = pct * 0.50
+                            else:
+                                job["progress"] = 50.0 + pct * 0.45
+                        else:
+                            # Single-stream: scale to 0–95% to leave room for post-processing
+                            job["progress"] = pct * 0.95
+                    except Exception:
+                        pass
+            elif "[Merger]" in line and "Merging formats into" in line:
+                # ffmpeg merge phase runs after both streams are downloaded
+                job["progress"] = 95
+                job["status_msg"] = "Merging…"
 
         proc.wait()
         if proc.returncode != 0:
