@@ -187,7 +187,7 @@ def run_extract(job_id, url, start, end, output_dir, fmt="mp4"):
             cmd = [
                 YTDLP,
                 "--download-sections", section,
-                "-f", "bestvideo[vcodec!^=av01][height<=1080]+bestaudio[acodec^=mp4a]/bestvideo[vcodec!^=av01][height<=1080]+bestaudio/bestvideo[height<=1080]+bestaudio/best",
+                "-f", "bestvideo[vcodec^=avc1][height<=1080]+bestaudio[acodec^=mp4a]/bestvideo[vcodec!^=av01][vcodec!^=vp09][height<=1080]+bestaudio[acodec^=mp4a]/bestvideo[vcodec!^=av01][vcodec!^=vp09][height<=1080]+bestaudio/best",
                 "--merge-output-format", "mp4",
                 "--postprocessor-args", "ffmpeg:-c:a aac -b:a 192k",
                 "-o", template,
