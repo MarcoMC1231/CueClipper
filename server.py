@@ -186,8 +186,9 @@ def run_extract(job_id, url, start, end, output_dir, fmt="mp4"):
             cmd = [
                 YTDLP,
                 "--download-sections", section,
-                "-f", "bestvideo[vcodec!^=av01][height<=1080]+bestaudio/bestvideo[height<=1080]+bestaudio/best",
+                "-f", "bestvideo[vcodec!^=av01][height<=1080]+bestaudio[acodec^=mp4a]/bestvideo[vcodec!^=av01][height<=1080]+bestaudio/bestvideo[height<=1080]+bestaudio/best",
                 "--merge-output-format", "mp4",
+                "--postprocessor-args", "ffmpeg:-c:a aac -b:a 192k",
                 "-o", template,
                 "--no-playlist",
                 "--newline",
@@ -260,6 +261,13 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/api/browse":
             folder = open_folder_dialog(DEFAULT_OUTPUT)
             self.send_json({"path": folder})
+        elif self.path.startswith("/api/reveal"):
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(self.path).query)
+            path = qs.get("path", [None])[0]
+            if path and os.path.isdir(path):
+                subprocess.Popen(["explorer", path], creationflags=_NO_WINDOW)
+            self.send_json({"ok": True})
         elif self.path.startswith("/api/job/"):
             job_id = self.path.split("/")[-1]
             job = JOBS.get(job_id)

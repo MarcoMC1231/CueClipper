@@ -58,6 +58,12 @@ Double-click `launch.vbs` — the server starts silently in the background and t
 
 ---
 
+## Known Issues
+
+- **Progress bar stuck at 0% / "Starting…"** — when downloading a 1080p clip (separate video + audio streams), yt-dlp's progress lines don't consistently match the expected format during the merge phase. The clip downloads and merges correctly in the background; the progress display just doesn't reflect it. MP3 and single-stream downloads are unaffected.
+
+---
+
 ## Planned
 
 **Adobe Premiere Pro CEP panel**
