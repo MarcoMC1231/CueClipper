@@ -300,17 +300,6 @@ input.mono {
 .extract-btn:active:not(:disabled) { transform: translateY(0); }
 .extract-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
 
-/* ── Progress ── */
-.progress-wrap { display: none; margin-top: 14px; }
-.progress-wrap.visible { display: block; }
-.prog-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
-.prog-track { height: 3px; border-radius: 99px; background: var(--ui-bg-hover); overflow: hidden; }
-.prog-fill {
-  height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, #e8622a, #f09040);
-  width: 0%; transition: width 0.3s ease;
-  box-shadow: 0 0 8px rgba(232,98,42,0.55);
-}
 
 /* ── Done box ── */
 .done-box {
@@ -533,17 +522,8 @@ input.mono {
         <button class="extract-btn" id="extractBtn" onclick="extract()" disabled>Extract Clip</button>
       </div>
 
-      <div class="progress-wrap" id="progressWrap">
-        <div class="prog-row">
-          <span id="statusMsg">Starting…</span>
-          <span id="progPct">0%</span>
-        </div>
-        <div class="prog-track">
-          <div class="prog-fill" id="progressBar"></div>
-        </div>
-      </div>
 
-      <div class="done-box" id="doneBox">
+<div class="done-box" id="doneBox">
         <div class="done-hdr">
           <div class="done-title">Done</div>
           <button class="dl-btn" onclick="revealFile()" title="Open folder">
@@ -824,9 +804,9 @@ async function extract() {
   const outputDir = document.getElementById('outputDir').value.trim();
 
   hide('doneBox'); hide('errorBox');
-  show('progressWrap');
-  setProgress(0, 'Starting…');
-  document.getElementById('extractBtn').disabled = true;
+  const extractBtn = document.getElementById('extractBtn');
+  extractBtn.disabled = true;
+  extractBtn.textContent = 'Extracting…';
 
   try {
     const r = await fetch(`${API}/api/extract`, {
@@ -837,15 +817,16 @@ async function extract() {
     const d = await r.json();
 
     if (d.error) {
-      showError(d.error); hide('progressWrap');
-      document.getElementById('extractBtn').disabled = false;
+      showError(d.error);
+      const b = document.getElementById('extractBtn');
+      b.disabled = false; b.textContent = 'Extract Clip';
       return;
     }
     pollJob(d.job_id);
   } catch (e) {
     showError('Cannot reach server. Is server.py running?');
-    hide('progressWrap');
-    document.getElementById('extractBtn').disabled = false;
+    const b = document.getElementById('extractBtn');
+    b.disabled = false; b.textContent = 'Extract Clip';
   }
 }
 
@@ -856,21 +837,19 @@ function pollJob(job_id) {
       const r   = await fetch(`${API}/api/job/${job_id}`);
       const job = await r.json();
 
-      setProgress(job.progress || 0, job.status_msg || '');
-
       if (job.status === 'done') {
-        hide('progressWrap');
         document.getElementById('donePath').textContent = job.output_dir || '';
         show('doneBox');
-        document.getElementById('extractBtn').disabled = false;
+        const b = document.getElementById('extractBtn');
+        b.disabled = false; b.textContent = 'Extract Clip';
         downloaded = true;
         lastOutputDir = job.output_dir || '';
         currentJobId = job_id;
         showToast('Clip saved ✓');
       } else if (job.status === 'error') {
-        hide('progressWrap');
         showError(job.error || 'Unknown error');
-        document.getElementById('extractBtn').disabled = false;
+        const b = document.getElementById('extractBtn');
+        b.disabled = false; b.textContent = 'Extract Clip';
       } else {
         pollJob(job_id);
       }
@@ -1021,11 +1000,6 @@ function updateDurBadge() {
 function show(id) { document.getElementById(id).classList.add('visible'); }
 function hide(id) { document.getElementById(id).classList.remove('visible'); }
 
-function setProgress(pct, msg) {
-  document.getElementById('progressBar').style.width = `${Math.min(pct, 100)}%`;
-  document.getElementById('statusMsg').textContent   = msg;
-  document.getElementById('progPct').textContent     = `${Math.round(pct)}%`;
-}
 
 function showError(msg) {
   document.getElementById('errorText').textContent = msg;
