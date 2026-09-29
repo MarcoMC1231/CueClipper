@@ -845,7 +845,6 @@ function pollJob(job_id) {
         downloaded = true;
         lastOutputDir = job.output_dir || '';
         currentJobId = job_id;
-        downloadToBrowser();
         showToast('Clip saved ✓');
       } else if (job.status === 'error') {
         showError(job.error || 'Unknown error');
@@ -1021,16 +1020,6 @@ async function revealFile() {
   } catch (_) {}
 }
 
-function downloadToBrowser() {
-  if (!currentJobId) return;
-  const a = document.createElement('a');
-  a.href = `${API}/api/download/${currentJobId}`;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showToast('Downloading to browser…');
-}
 </script>
 </body>
 </html>
