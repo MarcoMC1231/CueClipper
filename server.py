@@ -234,9 +234,15 @@ def run_extract(job_id, url, start, end, output_dir, fmt="mp4"):
                     except Exception:
                         pass
             elif "[Merger]" in line and "Merging formats into" in line:
-                # ffmpeg merge phase runs after both streams are downloaded
                 job["progress"] = 95
                 job["status_msg"] = "Merging…"
+                m_path = re.search(r'"([^"]+)"', line)
+                if m_path:
+                    job["output_path"] = m_path.group(1)
+            elif "[ExtractAudio] Destination:" in line:
+                job["output_path"] = line.split("[ExtractAudio] Destination:", 1)[1].strip().strip('"')
+            elif "[download] Destination:" in line:
+                job["output_path"] = line.split("[download] Destination:", 1)[1].strip().strip('"')
 
         proc.wait()
         if proc.returncode != 0:
@@ -286,6 +292,33 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/api/browse":
             folder = open_folder_dialog(DEFAULT_OUTPUT)
             self.send_json({"path": folder})
+        elif self.path.startswith("/api/download/"):
+            import urllib.parse
+            job_id = self.path.split("/")[-1]
+            job = JOBS.get(job_id)
+            if not job or job.get("status") != "done":
+                return self.send_json({"error": "Job not ready"}, 404)
+            path = job.get("output_path")
+            if not path or not os.path.isfile(path):
+                return self.send_json({"error": "File not found"}, 404)
+            filename = os.path.basename(path)
+            encoded = urllib.parse.quote(filename)
+            try:
+                size = os.path.getsize(path)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{encoded}")
+                self.send_header("Content-Length", str(size))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                with open(path, "rb") as f:
+                    while True:
+                        chunk = f.read(65536)
+                        if not chunk:
+                            break
+                        self.wfile.write(chunk)
+            except Exception:
+                pass
         elif self.path.startswith("/api/reveal"):
             from urllib.parse import urlparse, parse_qs
             qs = parse_qs(urlparse(self.path).query)

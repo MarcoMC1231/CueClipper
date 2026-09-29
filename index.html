@@ -319,11 +319,19 @@ input.mono {
   background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.18);
 }
 .done-box.visible { display: block; }
+.done-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .done-title {
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: rgba(74,222,128,0.85); margin-bottom: 4px;
+  text-transform: uppercase; color: rgba(74,222,128,0.85);
 }
 .done-path { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; word-break: break-all; }
+.dl-btn {
+  background: none; border: 1px solid rgba(74,222,128,0.25);
+  border-radius: 6px; color: rgba(74,222,128,0.65);
+  font-size: 13px; cursor: pointer; padding: 2px 9px; line-height: 1.4;
+  transition: all 0.15s; font-family: 'Raleway', sans-serif;
+}
+.dl-btn:hover { background: rgba(74,222,128,0.1); color: rgba(74,222,128,1); border-color: rgba(74,222,128,0.5); }
 
 /* ── Error box ── */
 .error-box {
@@ -541,7 +549,10 @@ input.mono {
       </div>
 
       <div class="done-box" id="doneBox">
-        <div class="done-title">Done</div>
+        <div class="done-hdr">
+          <div class="done-title">Done</div>
+          <button class="dl-btn" id="dlBtn" onclick="downloadToBrowser()" title="Save to Downloads folder">↓ Download</button>
+        </div>
         <div class="done-path" id="donePath"></div>
       </div>
 
@@ -566,6 +577,7 @@ let pendingUrl = null;
 let loadedUrl = null;
 let lastOutputDir = '';
 let _smartPasteTs = null;
+let currentJobId = null;
 
 // ── Settings dropdown ──────────────────────────────────────────────────────────
 
@@ -848,6 +860,7 @@ function pollJob(job_id) {
         document.getElementById('extractBtn').disabled = false;
         downloaded = true;
         lastOutputDir = job.output_dir || '';
+        currentJobId = job_id;
         document.getElementById('revealBtn').disabled = false;
         showToast('Clip saved ✓');
       } else if (job.status === 'error') {
@@ -1027,6 +1040,17 @@ async function revealFile() {
   try {
     await fetch(`${API}/api/reveal?path=${encodeURIComponent(lastOutputDir)}`);
   } catch (_) {}
+}
+
+function downloadToBrowser() {
+  if (!currentJobId) return;
+  const a = document.createElement('a');
+  a.href = `${API}/api/download/${currentJobId}`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Downloading to browser…');
 }
 </script>
 </body>
