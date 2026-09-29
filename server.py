@@ -334,6 +334,8 @@ class Handler(BaseHTTPRequestHandler):
             from urllib.parse import urlparse, parse_qs
             qs = parse_qs(urlparse(self.path).query)
             path = qs.get("path", [None])[0]
+            if path:
+                path = os.path.normpath(path)
             if path and os.path.isdir(path):
                 subprocess.Popen(["explorer", path], creationflags=_NO_WINDOW)
             self.send_json({"ok": True})
