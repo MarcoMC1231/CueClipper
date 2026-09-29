@@ -311,7 +311,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({"error": "Job not ready"}, 404)
             path = job.get("output_path")
             if not path or not os.path.isfile(path):
-                return self.send_json({"error": "File not found"}, 404)
+                # fallback: newest file in output_dir
+                out_dir = job.get("output_dir")
+                if out_dir and os.path.isdir(out_dir):
+                    files = [os.path.join(out_dir, f) for f in os.listdir(out_dir)
+                             if os.path.isfile(os.path.join(out_dir, f))]
+                    if files:
+                        path = max(files, key=os.path.getmtime)
+                if not path or not os.path.isfile(path):
+                    return self.send_json({"error": "File not found"}, 404)
             filename = os.path.basename(path)
             encoded = urllib.parse.quote(filename)
             try:

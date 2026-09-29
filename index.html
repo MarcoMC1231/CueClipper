@@ -845,6 +845,7 @@ function pollJob(job_id) {
         downloaded = true;
         lastOutputDir = job.output_dir || '';
         currentJobId = job_id;
+        downloadToBrowser();
         showToast('Clip saved ✓');
       } else if (job.status === 'error') {
         showError(job.error || 'Unknown error');
