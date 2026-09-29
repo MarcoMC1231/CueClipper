@@ -431,12 +431,12 @@ input.mono {
         <div class="dd hidden" id="dd">
           <div class="dd-sec">
             <div class="dd-lbl">Max Resolution</div>
-            <div class="dd-opt on" onclick="setRes(this,'best')"><div class="radio on"><div class="rdot"></div></div><span>Best available</span></div>
-            <div class="dd-opt" onclick="setRes(this,'2160')"><div class="radio"></div><span>4K (2160p)</span></div>
-            <div class="dd-opt" onclick="setRes(this,'1440')"><div class="radio"></div><span>1440p</span></div>
-            <div class="dd-opt" onclick="setRes(this,'1080')"><div class="radio"></div><span>1080p</span></div>
-            <div class="dd-opt" onclick="setRes(this,'720')"><div class="radio"></div><span>720p</span></div>
-            <div class="dd-opt" onclick="setRes(this,'480')"><div class="radio"></div><span>480p</span></div>
+            <div class="dd-opt on" data-res="best" onclick="setRes(this,'best')"><div class="radio on"><div class="rdot"></div></div><span>Best available</span></div>
+            <div class="dd-opt" data-res="2160" onclick="setRes(this,'2160')"><div class="radio"></div><span>4K (2160p)</span></div>
+            <div class="dd-opt" data-res="1440" onclick="setRes(this,'1440')"><div class="radio"></div><span>1440p</span></div>
+            <div class="dd-opt" data-res="1080" onclick="setRes(this,'1080')"><div class="radio"></div><span>1080p</span></div>
+            <div class="dd-opt" data-res="720" onclick="setRes(this,'720')"><div class="radio"></div><span>720p</span></div>
+            <div class="dd-opt" data-res="480" onclick="setRes(this,'480')"><div class="radio"></div><span>480p</span></div>
           </div>
           <div class="dd-sec">
             <div class="dd-lbl">Default Download Folder</div>
@@ -589,6 +589,7 @@ document.addEventListener('click', e => {
 
 function setRes(el, val) {
   selectedResolution = val;
+  localStorage.setItem('cue_resolution', val);
   el.closest('.dd-sec').querySelectorAll('.dd-opt').forEach(o => {
     o.classList.remove('on');
     o.querySelector('.radio').classList.remove('on');
@@ -674,6 +675,13 @@ setInterval(checkServerStatus, 5000);
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 (async () => {
+  // restore resolution from localStorage
+  const savedRes = localStorage.getItem('cue_resolution');
+  if (savedRes) {
+    const resEl = document.querySelector(`.dd-opt[data-res="${savedRes}"]`);
+    if (resEl) setRes(resEl, savedRes);
+  }
+
   // restore default folder from localStorage
   const saved = localStorage.getItem('cue_default_folder');
   if (saved) {
