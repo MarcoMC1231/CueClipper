@@ -156,7 +156,18 @@ def seconds_to_ts(s):
 
 # ─── background extract ───────────────────────────────────────────────────────
 
-def run_extract(job_id, url, start, end, output_dir, fmt="mp4"):
+def build_format(fmt, resolution):
+    if fmt == "mp3":
+        return None
+    h = "" if resolution == "best" else f"[height<={resolution}]"
+    return (
+        f"bestvideo[vcodec^=avc1]{h}+bestaudio[acodec^=mp4a]"
+        f"/bestvideo[vcodec!^=av01][vcodec!^=vp09]{h}+bestaudio[acodec^=mp4a]"
+        f"/bestvideo[vcodec!^=av01][vcodec!^=vp09]{h}+bestaudio"
+        f"/best"
+    )
+
+def run_extract(job_id, url, start, end, output_dir, fmt="mp4", resolution="best"):
     job = JOBS[job_id]
     try:
         os.makedirs(output_dir, exist_ok=True)
@@ -187,7 +198,7 @@ def run_extract(job_id, url, start, end, output_dir, fmt="mp4"):
             cmd = [
                 YTDLP,
                 "--download-sections", section,
-                "-f", "bestvideo[vcodec^=avc1][height<=1080]+bestaudio[acodec^=mp4a]/bestvideo[vcodec!^=av01][vcodec!^=vp09][height<=1080]+bestaudio[acodec^=mp4a]/bestvideo[vcodec!^=av01][vcodec!^=vp09][height<=1080]+bestaudio/best",
+                "-f", build_format(fmt, resolution),
                 "--merge-output-format", "mp4",
                 "--postprocessor-args", "ffmpeg:-c:a aac -b:a 192k",
                 "-o", template,
@@ -380,6 +391,7 @@ class Handler(BaseHTTPRequestHandler):
         end = data.get("end", "00:00:00")
         output_dir = data.get("output_dir", DEFAULT_OUTPUT).strip() or DEFAULT_OUTPUT
         fmt = data.get("format", "mp4")
+        resolution = data.get("resolution", "best")
 
         if not url:
             return self.send_json({"error": "URL required"}, 400)
@@ -388,7 +400,7 @@ class Handler(BaseHTTPRequestHandler):
 
         job_id = str(uuid.uuid4())[:8]
         JOBS[job_id] = {"status": "running", "progress": 0, "status_msg": "Starting…"}
-        t = threading.Thread(target=run_extract, args=(job_id, url, start, end, output_dir, fmt), daemon=True)
+        t = threading.Thread(target=run_extract, args=(job_id, url, start, end, output_dir, fmt, resolution), daemon=True)
         t.start()
         self.send_json({"job_id": job_id})
 
